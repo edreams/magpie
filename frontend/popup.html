@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html data-theme="light">
+  <head>
+    <link
+      href="https://cdn.jsdelivr.net/npm/daisyui@2.51.6/dist/full.css"
+      rel="stylesheet"
+      type="text/css"
+    />
+    <title>Save and Summarize Links</title>
+    <meta charset="UTF-8" />
+    <script src="popup.js"></script>
+    <style>
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        color: #fff;
+        padding: 20px;
+        font-weight: 200;
+        font-family: "Roboto", sans-serif;
+      }
+
+      p {
+        font-size: 1rem;
+        margin-bottom: 10px;
+        text-align: center;
+        font-weight: 100;
+        color: #000;
+      }
+
+      button {
+        margin-top: 10px;
+      }
+
+      #transcript, #summaries, #status {
+        margin-top: 30px;
+        font-size: 1.2rem;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        color: #000;
+      }
+
+      input {
+        color: #000;
+      }
+
+      #divider {
+        background-color: #000;
+        height: 1px;
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+
+    <p>AI21 Hackathon Team</p>
+
+    <div id="button-container">
+      <button id="save-link" class="btn btn-wide rounded-lg">Save link</button>
+      <button id="summarize-link" class="btn btn-accent btn-wide rounded-lg">Summarize and save link</button>
+      <button id="get-summaries" class="btn btn-accent btn-wide rounded-lg">Get summaries</button>
+    </div>
+
+    <div id="status"></div>
+    <div id="summaries"></div>
+
+    <div class="divider"></div>
+
+
+
+    <div id="qna" style="margin-top: 1rem"></div>
+  </body>
+</html>
+
