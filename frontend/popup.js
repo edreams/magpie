@@ -28,6 +28,15 @@ function saveLink(e) {
       if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
         status.textContent = "Link saved successfully!";
       }
+      else if (this.readyState === XMLHttpRequest.DONE && this.status === 400) {
+        status.textContent = "400 Error";
+      }
+      else if (this.readyState === XMLHttpRequest.DONE && this.status === 500) {
+        status.textContent = "500 Error";
+      }
+      else {
+        status.textContent = "Error saving link. Please, try again.";
+      }
     }
   });
 }
