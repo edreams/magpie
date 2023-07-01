@@ -2,7 +2,7 @@
 <html data-theme="light">
   <head>
     <link
-      href="https://cdn.jsdelivr.net/npm/daisyui@2.51.6/dist/full.css" 
+      href="https://cdn.jsdelivr.net/npm/daisyui@2.51.6/dist/full.css"
       rel="stylesheet"
       type="text/css"
     />
@@ -49,16 +49,23 @@
         height: 1px;
         width: 100%;
       }
+
+      .team-name {
+        text-align: center;
+      }
     </style>
   </head>
   <body>
 
-    <p>Magpie AI ✨</p>
+    <img src="icon.png" alt="Icon" style="display: block; margin: 0 auto; width: 100px; height: 100px;">
+    <p class="team-name">AI21 Hackathon Team</p>
 
     <div id="button-container">
       <button id="save-link" class="btn btn-wide rounded-lg">Save link</button>
       <button id="summarize-link" class="btn btn-accent btn-wide rounded-lg">Summarize and save link</button>
       <button id="get-summaries" class="btn btn-accent btn-wide rounded-lg">Get summaries</button>
+      <button id="send-text" class="btn btn-accent btn-wide rounded-lg">Play Selected Text</button>
+
     </div>
 
     <div id="status"></div>
@@ -66,9 +73,13 @@
 
     <div class="divider"></div>
 
+    <div id="qna" style="margin-top: 1rem"></div>
+  </body>
+</html>
+
+
 
 
     <div id="qna" style="margin-top: 1rem"></div>
   </body>
 </html>
-
