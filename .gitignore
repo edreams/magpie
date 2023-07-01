@@ -114,3 +114,6 @@ __pycache__
 
 build
 
+# virtualenv
+venv/
+virualenv/
