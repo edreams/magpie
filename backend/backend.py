@@ -11,14 +11,9 @@ import os
 
 app = Flask(__name__)
 CORS(app)
-<<<<<<< Updated upstream
-
-# Read the environment variables
-=======
 # Constants
 AUDIO_FORMAT = "audio/mp3"
 # Environment variables
->>>>>>> Stashed changes
 api_key = os.getenv('AI21_API_KEY')
 db_password = os.getenv('DB_PASSWORD')
 
@@ -32,9 +27,6 @@ connection_pool = pool.SimpleConnectionPool(
     dbname='postgres'
 )
 
-<<<<<<< Updated upstream
-ai21.api_key = api_key  # Use the API key from the environment variable
-=======
 ai21.api_key = api_key
 
 
@@ -46,7 +38,6 @@ def valid_url(url):
         return all([result.scheme, result.netloc])
     except ValueError:
         return False
->>>>>>> Stashed changes
 
 
 @app.route('/save-link', methods=["POST"])
@@ -101,30 +92,6 @@ def summarize_and_save():
         # Configure Chrome options
         chrome_options = Options()
         chrome_options.binary_location = os.getenv('CHROME_PATH')
-<<<<<<< Updated upstream
-        #chrome_options.add_argument('--headless')  # Run Chrome in headless mode
-
-        # Create an instance of the Chrome driver
-        driver = webdriver.Chrome(os.getenv('CHROMEDRIVER_PATH'), options=chrome_options)
-
-        # Navigate to the URL using Selenium 
-        driver.get(url)
-
-        # Wait 10 seconds
-        time.sleep(10)
-
-        # Get the page content
-        content = driver.page_source
-
-        # Close the browser
-        driver.quit()
-
-        # Continue with the rest of the code
-        soup = BeautifulSoup(content, 'html.parser')
-        transcript = ' '.join(soup.stripped_strings)
-        # Print the 'soup' content
-        print('Soup content:')
-=======
         # Instantiate the Chrome Controller
         driver = webdriver.Chrome(os.getenv('CHROMEDRIVER_PATH'), options=chrome_options)
         # Navigate to url using selenium
@@ -140,7 +107,6 @@ def summarize_and_save():
         transcript = ' '.join(soup.stripped_strings)
         # Print the content of 'soup'
         print('soup content:')
->>>>>>> Stashed changes
         print(soup)
 
         try:
@@ -276,20 +242,6 @@ def get_summaries():
     if request.method == "POST":
         body = request.get_json()
         user_id = body['user_id']
-<<<<<<< Updated upstream
-        with connection_pool.getconn() as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    "SELECT link, summary FROM summaries WHERE user_id = %s",
-                    (user_id,)
-                )
-                summaries = [{'link': link, 'summary': summary} for link, summary in cur.fetchall()]
-        return jsonify(summaries=summaries)
-
-
-if __name__ == '__main__':
-    app.run(debug=True)
-=======
 
         try:
             with connection_pool.getconn() as conn:
@@ -349,5 +301,4 @@ def index():
 
 if __name__ == '__main__':
    app.run(debug=True, host='localhost', port=5000)
->>>>>>> Stashed changes
 
