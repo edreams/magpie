@@ -1,20 +1,26 @@
 {
-  "manifest_version": 2,
-  "name": "Magpie AI Chrome Extension",
+  "manifest_version": 3,
+  "name": "Magpie AI",
   "version": "1.0",
   "permissions": [
     "activeTab",
     "storage",
-    "http://localhost:5000/"
+    "scripting"
   ],
-  "browser_action": {
+  "action": {
     "default_icon": "icon.png",
     "default_popup": "popup.html"
   },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["popup.js"]
+      "js": ["content.js"]
     }
+  ],
+  "host_permissions": [
+    "https://soychile.org/"
   ]
 }
+
+
+
