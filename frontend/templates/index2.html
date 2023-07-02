@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="popup.js"></script>
+  <title>Newsletter</title>
+  <style>
+    /* Add your CSS styles here */
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.5;
+      background-color: #f9f9f9;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #fff;
+      border-radius: 5px;
+      padding: 20px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    
+    h1 {
+      color: #333;
+      margin-top: 0;
+    }
+    
+    .section-button {
+      display: inline-block;
+      padding: 10px 20px;
+      margin-bottom: 10px;
+      background-color: #eee;
+      color: #555;
+      border-radius: 5px;
+      text-decoration: none;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      transition: box-shadow 0.3s ease-in-out;
+      font-weight: bold;
+    }
+    
+    .section-button:hover {
+      box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+    }
+    
+    .voice-button {
+      margin-left: 10px;
+      padding: 5px 10px;
+      background-color: #555;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    
+    p {
+      color: #666;
+    }
+    
+    .footer {
+      margin-top: 20px;
+      font-size: 12px;
+      text-align: center;
+      color: #999;
+    }
+  </style>
+  <script>
+    function speak(text) {
+      const synth = window.speechSynthesis;
+      const utterance = new SpeechSynthesisUtterance(text);
+      synth.speak(utterance);
+    }
+  </script>
+</head>
+<body>
+  <div class="container">
+    <h1>MagpieAI Newsletter ✨</h1>
+    <p>Welcome to our newsletter! Here are the summaries of your favorite articles.</p>
+    
+    <a class="section-button" href="https://example.com" target="_blank">Section 1</a>
+    <button class="voice-button" onclick="speak('Article 1')">🔊</button>
+    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum semper ipsum sed justo consectetur, ac hendrerit erat euismod.</p>
+    
+    <a class="section-button" href="https://example.com" target="_blank">Section 2</a>
+    <button class="voice-button" onclick="speak('Article 2')">🔊</button>
+    <p>Integer accumsan arcu vel elit feugiat ultrices. Nam sagittis magna id mauris accumsan, eu efficitur dui suscipit.</p>
+    
+    <a class="section-button" href="https://example.com" target="_blank">Section 3</a>
+    <button class="voice-button" onclick="speak('Article 3')">🔊</button>
+    <p>Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. In consequat mi vel turpis feugiat hendrerit.</p>
+    
+    <p>Thank you for reading our newsletter!</p>
+    
+    <p class="footer">Sincerely,<br>
+    Your MagpieAI Newsletter Team</p>
+  </div>
+</body>
+</html>

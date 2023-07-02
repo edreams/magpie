@@ -18,7 +18,7 @@
     }
   ],
   "host_permissions": [
-    "https://soychile.org/"
+    "http://localhost:5000"
   ]
 }
 

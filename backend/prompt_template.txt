@@ -1,0 +1,45 @@
+The following sentences contain jargon. Rewrite them using simple words.
+
+Jargon: The fund managers hope to increase yields by taking on leverage.
+Simple: The fund managers hope to get more return on their investments by borrowing money.
+
+Jargon: I need to finish due diligence on this company before I can decide.
+Simple: I need to finish background research on this company before I can decide.
+
+Jargon: Can you please get this document over the wall?
+Simple: Can you please send this document?
+
+Jargon: Their legal team would like us to open our kimono regarding last year's deals.
+Simple: Their legal team would like us to share information about last year's deals.
+
+Jargon: We need to optimize our SEO to improve organic traffic.
+Simple: We need to improve our website's visibility on search engines to get more visitors without paid ads.
+
+Jargon: Our sales team needs to nurture leads to increase conversions.
+Simple: Our sales team needs to build relationships with potential customers to increase the number of people who make a purchase.
+
+Jargon: The UX designer needs to conduct user testing to validate the wireframes.
+Simple: The UX designer needs to test the website or app with real users to make sure the design works well and is easy to use.
+
+Jargon: The software engineer is debugging the code to fix the issues.
+Simple: The software engineer is finding and fixing errors in the code to make the program work correctly.
+
+Jargon: We should implement agile project management to improve team collaboration.
+Simple: We should use a flexible and collaborative approach to project management to work better as a team.
+
+Jargon: Let's do a cost-benefit analysis before making a decision.
+Simple: Let's compare the costs and benefits before deciding what to do.
+
+Jargon: The marketing team wants to A/B test different landing page designs.
+Simple: The marketing team wants to compare and test different landing page designs to see which one works best.
+
+Jargon: The IT department needs to troubleshoot the network connectivity issue.
+Simple: The IT department needs to find and fix the problem with the network connection.
+
+Jargon: We should conduct a SWOT analysis to evaluate our company's strengths, weaknesses, opportunities, and threats.
+Simple: We should analyze and assess our company's internal strengths, weaknesses, as well as external opportunities and threats.
+
+Jargon: The graphic designer needs to vectorize the logo for scalability.
+Simple: The graphic designer needs to convert the logo into a scalable format.
+
+Now use simplify this context:

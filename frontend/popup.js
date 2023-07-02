@@ -1,7 +1,8 @@
 document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('save-link').addEventListener('click', saveLink);
   document.getElementById('summarize-link').addEventListener('click', summarizeAndSaveLink);
-  document.getElementById('get-summaries').addEventListener('click', getSummaries);
+  //document.getElementById('get-summaries').addEventListener('click', getSummaries);
+  document.getElementById('get-summaries').addEventListener('click', myLibrary);
   document.getElementById('send-text').addEventListener('click', sendSelectedText);
 });
 
@@ -15,7 +16,7 @@ function saveLink(e) {
     var user_id = "123";  // Fixed user ID
 
     var req = new XMLHttpRequest();
-    var baseUrl = "https://soychile.org/save-link";
+    var baseUrl = "http://localhost:5000/save-link";
     var body = JSON.stringify({
       'url': activeTab.url,
       'user_id': user_id
@@ -36,7 +37,7 @@ function saveLink(e) {
         status.textContent = "500 Error";
       }
       else {
-        status.textContent = "Error saving link. Please, try again.";
+        status.textContent = "Error saving link. Please try again.";
       }
     }
   });
@@ -52,7 +53,7 @@ function summarizeAndSaveLink(e) {
     var user_id = "123";  // Fixed user ID
 
     var req = new XMLHttpRequest();
-    var baseUrl = "https://soychile.org/summarize-and-save";
+    var baseUrl = "http://localhost:5000/summarize-and-save";
     var body = JSON.stringify({
       'url': activeTab.url,
       'user_id': user_id
@@ -70,6 +71,11 @@ function summarizeAndSaveLink(e) {
   });
 }
 
+function myLibrary() {
+  chrome.tabs.create({ url: './templates/index2.html' });
+}
+
+
 function getSummaries(e) {
   e.preventDefault();
 
@@ -79,7 +85,7 @@ function getSummaries(e) {
   var user_id = "123";  // Fixed user ID
 
   var req = new XMLHttpRequest();
-  var baseUrl = "https://soychile.org/get-summaries";
+  var baseUrl = "http://localhost:5000/get-summaries";
   var body = JSON.stringify({
     'user_id': user_id
   });
@@ -130,7 +136,7 @@ function sendSelectedTextToBackend(selectedText) {
     text: selectedText
   };
 
-  fetch('https://soychile.org/play-selected', {
+  fetch('http://localhost:5000/play-selected', {
     method: 'POST',
     body: JSON.stringify(data),
     headers: {
@@ -139,13 +145,13 @@ function sendSelectedTextToBackend(selectedText) {
   })
     .then(function(response) {
       if (response.ok) {
-        return response.blob(); // Ahora esperamos un objeto Blob desde el backend
+        return response.blob(); // Now we expect a Blob object from the backend
       } else {
         throw new Error('Error sending text to the backend');
       }
     })
     .then(function(audioBlob) {
-      // Reproducir el audio en la extensión de Chrome
+      //Play audio in chrome extension
       const audioUrl = URL.createObjectURL(audioBlob);
       const audio = new Audio(audioUrl);
       audio.play();
