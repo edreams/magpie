@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from markupsafe import escape
 from flask_cors import CORS
 from psycopg2 import pool
 import ai21
