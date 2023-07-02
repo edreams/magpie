@@ -92,8 +92,6 @@ def summarize_and_save():
         print('Soup content:')
         print(soup)
 
-        
-
         try:
             summary = ai21.Summarize.execute(
                 source=transcript,
