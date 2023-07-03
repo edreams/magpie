@@ -7,8 +7,11 @@ import requests
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 import time
 import os  
+from dotenv import load_dotenv
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
@@ -17,6 +20,8 @@ AUDIO_FORMAT = "audio/mp3"
 # Environment variables
 api_key = os.getenv('AI21_API_KEY')
 db_password = os.getenv('DB_PASSWORD')
+eleven_api_key = os.getenv('ELEVEN_API_KEY')
+chrome_path = os.getenv('CHROME_PATH')
 
 connection_pool = pool.SimpleConnectionPool(
     minconn=1,
@@ -25,7 +30,7 @@ connection_pool = pool.SimpleConnectionPool(
     port=5432,
     user='postgres',
     password=db_password,  # Use the database password from the environment variable
-    dbname='postgres'
+    dbname='magpieai_db'
 )
 
 ai21.api_key = api_key
@@ -91,13 +96,14 @@ def summarize_and_save():
         user_id = body['user_id']
 
         # Configure Chrome options
+        service = Service(executable_path=r'/usr/local/bin/chromedriver')
         chrome_options = Options()
-        chrome_options.binary_location = os.getenv('CHROME_PATH')
+        chrome_options.binary_location = r"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" 
         # Instantiate the Chrome Controller
-        driver = webdriver.Chrome(os.getenv('CHROMEDRIVER_PATH'), options=chrome_options)
+        driver = webdriver.Chrome(service=service, options=chrome_options)
         # Navigate to url using selenium
         driver.get(url)
-        # wait 10 seconds
+        # wait 1 seconds
         time.sleep(1)
         # Get the page content
         content = driver.page_source
@@ -117,14 +123,18 @@ def summarize_and_save():
             )
         except Exception as e:
             return (str(e), 400)
-        with connection_pool.getconn() as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    "INSERT INTO summaries (user_id, link, summary) VALUES (%s, %s, %s)",
-                    (user_id, url, summary["summary"])
-                )
-            conn.commit()
-        return jsonify(success=True)
+        
+        try:
+            with connection_pool.getconn() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "INSERT INTO summaries (user_id, link, summary) VALUES (%s, %s, %s)",
+                        (user_id, url, summary["summary"])
+                    )
+                conn.commit()
+            return jsonify(success=True)
+        except Error as e:
+            return jsonify(message=str(e)), 500
 
 #SIMPLIFIED SUMMARY BUTTON
 @app.route('/simplified-summary', methods=["POST"]) 
@@ -197,7 +207,7 @@ def simplified_summary():
                                         model="j2-ultra",  
                                         prompt=template+summary['summary'],
                                         numResults=1,
-                                        maxTokens=40,
+                                        maxTokens=4000,
                                         temperature=0.4,
                                         topKReturn=0,
                                         topP=1,
@@ -301,5 +311,5 @@ def index():
 
 
 if __name__ == '__main__':
-   app.run(debug=True, host='localhost', port=5000)
+   app.run(debug=True, host='0.0.0.0', port=5000)
 
