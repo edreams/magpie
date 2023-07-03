@@ -82,7 +82,7 @@ def get_links():
                 links = [link for link, in cur.fetchall()]
         return jsonify(links=links)
 
-#SUMMARY AND SAVE
+#SUMMARY AND SAVE OR STANDARD SUMMARY BUTTON
 @app.route('/summarize-and-save', methods=["POST"])
 def summarize_and_save():
     """_summary_and_save_
@@ -95,32 +95,36 @@ def summarize_and_save():
         url = body['url']
         user_id = body['user_id']
 
-        # Configure Chrome options
-        service = Service(executable_path=r'/usr/local/bin/chromedriver')
-        chrome_options = Options()
-        chrome_options.binary_location = r"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" 
-        # Instantiate the Chrome Controller
-        driver = webdriver.Chrome(service=service, options=chrome_options)
-        # Navigate to url using selenium
-        driver.get(url)
-        # wait 1 seconds
-        time.sleep(1)
-        # Get the page content
-        content = driver.page_source
-        # close browser
-        driver.quit()
-        # Continue with the rest of the code
-        soup = BeautifulSoup(content, 'html.parser')
-        transcript = ' '.join(soup.stripped_strings)
-        # Print the content of 'soup'
-        print('soup content:')
-        print(soup)
+        # # Configure Chrome options
+        # service = Service(executable_path=r'/usr/local/bin/chromedriver')
+        # chrome_options = Options()
+        # chrome_options.binary_location = r"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" 
+        # # Instantiate the Chrome Controller
+        # driver = webdriver.Chrome(service=service, options=chrome_options)
+        # # Navigate to url using selenium
+        # driver.get(url)
+        # # wait 1 seconds
+        # time.sleep(1)
+        # # Get the page content
+        # content = driver.page_source
+        # # close browser
+        # driver.quit()
+        # # Continue with the rest of the code
+        # soup = BeautifulSoup(content, 'html.parser')
+        # transcript = ' '.join(soup.stripped_strings)
+        # # Print the content of 'soup'
+        # print('soup content:')
+        # print(soup)
 
         try:
+            # summary = ai21.Summarize.execute(
+            #     source=transcript,
+            #     sourceType="TEXT"
+            # )
             summary = ai21.Summarize.execute(
-                source=transcript,
-                sourceType="TEXT"
-            )
+                source=url,
+                sourceType="URL"
+            ) #return a dictionary {'id', 'summary'}
         except Exception as e:
             return (str(e), 400)
         
@@ -132,12 +136,13 @@ def summarize_and_save():
                         (user_id, url, summary["summary"])
                     )
                 conn.commit()
-            return jsonify(success=True)
-        except Error as e:
+            print(summary['summary'])
+            return jsonify(summary['summary']) #, success=True
+        except Exception as e:
             return jsonify(message=str(e)), 500
 
 #SIMPLIFIED SUMMARY BUTTON
-@app.route('/simplified-summary', methods=["POST"]) 
+@app.route('/simple-summary', methods=["POST"]) 
 def simplified_summary():
     """simplified-summary
     query 'summaries' table for one latest summary for a given user_id, link
@@ -149,33 +154,33 @@ def simplified_summary():
         url = body['url']
         user_id = body['user_id']
         #==================Web scraping==================#
-        if not valid_url(url):
-            return jsonify(message="Invalid URL"), 400
+        # if not valid_url(url):
+        #     return jsonify(message="Invalid URL"), 400
 
-        # Configure Chrome options
-        chrome_options = Options()
-        chrome_options.binary_location = os.getenv('CHROME_PATH')
-        # Instantiate the Chrome Controller
-        driver = webdriver.Chrome(os.getenv('CHROMEDRIVER_PATH'), options=chrome_options)
-        # Navigate to url using selenium
-        driver.get(url)
-        # wait 10 seconds
-        time.sleep(1)
-        # Get the page content
-        content = driver.page_source
-        # close browser
-        driver.quit()
-        # Continue with the rest of the code
-        soup = BeautifulSoup(content, 'html.parser')
-        transcript = ' '.join(soup.stripped_strings)
-        # Print the content of 'soup'
-        print('soup content:')
-        print(soup)
+        # # Configure Chrome options
+        # chrome_options = Options()
+        # chrome_options.binary_location = os.getenv('CHROME_PATH')
+        # # Instantiate the Chrome Controller
+        # driver = webdriver.Chrome(os.getenv('CHROMEDRIVER_PATH'), options=chrome_options)
+        # # Navigate to url using selenium
+        # driver.get(url)
+        # # wait 10 seconds
+        # time.sleep(1)
+        # # Get the page content
+        # content = driver.page_source
+        # # close browser
+        # driver.quit()
+        # # Continue with the rest of the code
+        # soup = BeautifulSoup(content, 'html.parser')
+        # transcript = ' '.join(soup.stripped_strings)
+        # # Print the content of 'soup'
+        # print('soup content:')
+        # print(soup)
 
         try:
             summary = ai21.Summarize.execute(
-                source=transcript,
-                sourceType="TEXT"
+                source=url,
+                sourceType="URL"
             )
         except Exception as e:
             return (str(e), 400)
@@ -207,7 +212,7 @@ def simplified_summary():
                                         model="j2-ultra",  
                                         prompt=template+summary['summary'],
                                         numResults=1,
-                                        maxTokens=4000,
+                                        maxTokens=7000,
                                         temperature=0.4,
                                         topKReturn=0,
                                         topP=1,
@@ -238,8 +243,9 @@ def simplified_summary():
                                         stopSequences=["Now use simplify this context:","↵↵"]
                     )
                     simplified_summary = simplified_summary['completions'][0]['data']['text']
+                    print(simplified_summary+"SIMPLIFIED SUMMARY")
             return jsonify(simplified_summary) 
-        except Error as e:
+        except Exception as e:
             return jsonify(message=str(e)), 500
 
 
@@ -263,7 +269,7 @@ def get_summaries():
                     )
                     summaries = [{'link': link, 'summary': summary} for link, summary in cur.fetchall()]
             return jsonify(summaries=summaries)
-        except Error as e:
+        except Exception as e:
             return jsonify(message=str(e)), 500
 
 

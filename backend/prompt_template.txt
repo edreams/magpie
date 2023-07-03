@@ -15,12 +15,6 @@ Simple: Their legal team would like us to share information about last year's de
 Jargon: We need to optimize our SEO to improve organic traffic.
 Simple: We need to improve our website's visibility on search engines to get more visitors without paid ads.
 
-Jargon: Our sales team needs to nurture leads to increase conversions.
-Simple: Our sales team needs to build relationships with potential customers to increase the number of people who make a purchase.
-
-Jargon: The UX designer needs to conduct user testing to validate the wireframes.
-Simple: The UX designer needs to test the website or app with real users to make sure the design works well and is easy to use.
-
 Jargon: The software engineer is debugging the code to fix the issues.
 Simple: The software engineer is finding and fixing errors in the code to make the program work correctly.
 

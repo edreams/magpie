@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="popup.js"></script>
+  <title>MagpieAI Newsletter</title>
+  <style>
+    /* Add your CSS styles here */
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.5;
+      background-color: #f9f9f9;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #fff;
+      border-radius: 5px;
+      padding: 20px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    
+    h1 {
+      color: #333;
+      margin-top: 0;
+    }
+    
+    .section-button {
+      display: inline-block;
+      padding: 10px 20px;
+      margin-bottom: 10px;
+      background-color: #eee;
+      color: #555;
+      border-radius: 5px;
+      text-decoration: none;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      transition: box-shadow 0.3s ease-in-out;
+      font-weight: bold;
+    }
+    
+    .section-button:hover {
+      box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+    }
+    
+    .voice-button {
+      margin-left: 10px;
+      padding: 5px 10px;
+      background-color: #555;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    
+    p {
+      color: #666;
+    }
+    
+    .footer {
+      margin-top: 20px;
+      font-size: 12px;
+      text-align: center;
+      color: #999;
+    }
+  </style>
+  <script>
+    function speak(text) {
+      const synth = window.speechSynthesis;
+      const utterance = new SpeechSynthesisUtterance(text);
+      synth.speak(utterance);
+    }
+  </script>
+  <script>
+    // Sample data
+    const links = ["https://example.com/link1", "https://example.com/link2", "https://example.com/link3"];
+    const summaries = ["Summary 1", "Summary 2", "Summary 3"];
+
+    document.addEventListener("DOMContentLoaded", function(event) {
+      // Get the container element
+      const container = document.querySelector('.container');
+
+      // Generate sections based on the number of links and summaries
+      for (let i = 0; i < links.length; i++) {
+        const sectionButton = document.createElement('a');
+        sectionButton.classList.add('section-button');
+        sectionButton.href = links[i];
+        sectionButton.target = '_blank';
+        sectionButton.textContent = 'Section ' + (i + 1);
+        container.appendChild(sectionButton);
+
+        const voiceButton = document.createElement('button');
+        voiceButton.classList.add('voice-button');
+        voiceButton.setAttribute('onclick', `speak('Article ${i + 1}')`);
+        voiceButton.textContent = '🔊';
+        container.appendChild(voiceButton);
+
+        const summary = document.createElement('p');
+        summary.textContent = summaries[i];
+        container.appendChild(summary);
+      }
+
+      const footer = document.createElement('p');
+      footer.classList.add('footer');
+      footer.textContent = 'Sincerely,\n\nYour MagpieAI Newsletter Team';
+      container.appendChild(footer);
+    });
+  </script>
+</head>
+<body>
+  <div class="container">
+    <h1>MagpieAI Newsletter ✨</h1>
+    <p>Welcome to our newsletter! Here are the summaries of your favorite articles.</p>
+    
+    <p>Thank you for reading our newsletter!</p>
+  </div>
+</body>
+</html>

@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('save-link').addEventListener('click', saveLink);
-  document.getElementById('summarize-link').addEventListener('click', summarizeAndSaveLink);
-  //document.getElementById('get-summaries').addEventListener('click', getSummaries);
+  document.getElementById('standard-summary').addEventListener('click', summarizeAndSaveLink);
+  document.getElementById('simple-summary').addEventListener('click', simpleSummary);
   document.getElementById('get-summaries').addEventListener('click', myLibrary);
   document.getElementById('send-text').addEventListener('click', sendSelectedText);
 });
@@ -36,6 +36,9 @@ function saveLink(e) {
       else if (this.readyState === XMLHttpRequest.DONE && this.status === 500) {
         status.textContent = "500 Error";
       }
+      else if (this.readyState === XMLHttpRequest.DONE && this.status === 409) {
+        status.textContent = "Link already saved!";
+      }
       else {
         status.textContent = "Error saving link. Please try again.";
       }
@@ -47,6 +50,7 @@ function summarizeAndSaveLink(e) {
   e.preventDefault();
 
   var status = document.getElementById('status');
+  var summary = document.getElementById('summary');
 
   chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
     var activeTab = tabs[0];
@@ -63,13 +67,86 @@ function summarizeAndSaveLink(e) {
     req.setRequestHeader("Content-Type", "application/json");
     req.send(body);
 
+    // req.onreadystatechange = function() {
+    //   if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
+    //     status.textContent = "Link summarized and saved successfully!";
+    //   }
+    // }
+    status.textContent = "Loading...";
+    summary.textContent = "";
     req.onreadystatechange = function() {
-      if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
-        status.textContent = "Link summarized and saved successfully!";
+    if (this.readyState === XMLHttpRequest.DONE) {
+      if (this.status === 200) {
+        var response = JSON.parse(this.responseText);
+
+        summary.textContent = "";
+        status.textContent = "Loading...";
+        if (response.length === 0) {
+          var noSummariesElement = document.createElement('p');
+          noSummariesElement.textContent = "No summaries available.";
+          status.textContent = "No summaries available.";
+          //summaryContainer.appendChild(noSummariesElement);
+        } else {
+          summary.textContent = response;
+          // console.log(response);
+          status.textContent = "Your summary:";
+        }
+      } else {
+        status.textContent = "Error retrieving summaries. Please try again.";
       }
     }
+  }
   });
 }
+
+function simpleSummary(e) {
+  e.preventDefault();
+
+  var status = document.getElementById('status');
+  var summary = document.getElementById('summary');
+
+  chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+    var activeTab = tabs[0];
+    var user_id = "123";  // Fixed user ID
+
+    var req = new XMLHttpRequest();
+    var baseUrl = "http://localhost:5000/simple-summary";
+    var body = JSON.stringify({
+      'url': activeTab.url,
+      'user_id': user_id
+    });
+
+    req.open("POST", baseUrl, true);
+    req.setRequestHeader("Content-Type", "application/json");
+    req.send(body);
+
+    status.textContent = "Loading...";
+    summary.textContent = "";
+
+    req.onreadystatechange = function() {
+    if (this.readyState === XMLHttpRequest.DONE) {
+      if (this.status === 200) {
+        var response = JSON.parse(this.responseText);
+
+        summary.textContent = "";
+        if (response.length === 0) {
+          var noSummariesElement = document.createElement('p');
+          noSummariesElement.textContent = "No summaries available.";
+          status.textContent = "No summaries available.";
+          //summaryContainer.appendChild(noSummariesElement);
+        } else {
+          summary.textContent = response;
+          console.log(response);
+          status.textContent = "Simplified summary:";
+        }
+      } else {
+        status.textContent = "Error retrieving summaries. Please try again.";
+      }
+    }
+  }
+  });
+}
+
 
 function myLibrary() {
   chrome.tabs.create({ url: './templates/index2.html' });
