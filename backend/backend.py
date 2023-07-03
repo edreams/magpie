@@ -25,7 +25,7 @@ chrome_path = os.getenv('CHROME_PATH')
 
 connection_pool = pool.SimpleConnectionPool(
     minconn=1,
-    maxconn=10,
+    maxconn=20,
     host='localhost',
     port=5432,
     user='postgres',
