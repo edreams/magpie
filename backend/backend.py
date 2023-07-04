@@ -1,3 +1,4 @@
+import re
 from flask import Flask, request, jsonify
 from markupsafe import escape
 from flask_cors import CORS
@@ -11,6 +12,12 @@ from selenium.webdriver.chrome.service import Service
 import time
 import os  
 from dotenv import load_dotenv
+# from pydantic import BaseModel, root_validator, validator
+# from typing import Union, List, Optional
+# from elevenlabs import clone, generate, play, set_api_key
+# from elevenlabs.api import History
+import requests
+import datetime
 load_dotenv()
 
 app = Flask(__name__)
@@ -25,7 +32,7 @@ chrome_path = os.getenv('CHROME_PATH')
 
 connection_pool = pool.SimpleConnectionPool(
     minconn=1,
-    maxconn=20,
+    maxconn=30,
     host='localhost',
     port=5432,
     user='postgres',
@@ -33,8 +40,40 @@ connection_pool = pool.SimpleConnectionPool(
     dbname='magpieai_db'
 )
 
+# Voice using Eleven API
+voice= "Bella"
+#voice="cloned/rodrigocl"
+# Get current timestamp
+timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+CHUNK_SIZE = 1024
+#a random voice from https://api.elevenlabs.io/v1/voices
+url_voice = "https://api.elevenlabs.io/v1/text-to-speech/21m00Tcm4TlvDq8ikWAM"
+
+headers = {
+"Accept": "audio/mpeg",
+"Content-Type": "application/json",
+"xi-api-key": eleven_api_key
+}
+
 ai21.api_key = api_key
 
+def get_website_headline(url):
+    # Send a GET request to the website
+    response = requests.get(url)
+    
+    # Create a BeautifulSoup object to parse the HTML content
+    soup = BeautifulSoup(response.text, 'html.parser')
+    
+    # Find the headline element in the HTML
+    headline_element = soup.find('h1')  # Adjust this according to the specific website's HTML structure
+    
+    if headline_element:
+        headline = headline_element.text.strip()
+        headline = headline.replace(' ', '_')
+        re.sub(r'[^\x00-\x7F]+','', headline)
+        return headline
+    else:
+        return 'no_headline'
 
 def valid_url(url):
     """valid_url
@@ -94,7 +133,7 @@ def summarize_and_save():
         body = request.get_json()
         url = body['url']
         user_id = body['user_id']
-
+        headline = get_website_headline(url)
         # # Configure Chrome options
         # service = Service(executable_path=r'/usr/local/bin/chromedriver')
         # chrome_options = Options()
@@ -137,11 +176,31 @@ def summarize_and_save():
                     )
                 conn.commit()
             print(summary['summary'])
+
+            data = {
+            "text": summary['summary'],
+            "model_id": "eleven_monolingual_v1",
+            "voice_settings": {
+                "stability": 0.5,
+                "similarity_boost": 0.5}
+            }
+
+            #create audio file from Eleven API
+            resp = requests.post(url_voice, json=data, headers=headers)
+            print("Response status code: ", resp.status_code)
+            with open(f"audio/{headline}.mp3", 'wb') as f:
+                print("Writing audio file")
+                # for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
+                #     if chunk:
+                f.write(resp.content)
+
             return jsonify(summary['summary']) #, success=True
+        
         except Exception as e:
+            print(str(e))
             return jsonify(message=str(e)), 500
 
-#SIMPLIFIED SUMMARY BUTTON
+#SIMPLE SUMMARY BUTTON
 @app.route('/simple-summary', methods=["POST"]) 
 def simplified_summary():
     """simplified-summary
@@ -153,6 +212,7 @@ def simplified_summary():
         body = request.get_json()
         url = body['url']
         user_id = body['user_id']
+        headline = get_website_headline(url)
         #==================Web scraping==================#
         # if not valid_url(url):
         #     return jsonify(message="Invalid URL"), 400
@@ -244,6 +304,23 @@ def simplified_summary():
                     )
                     simplified_summary = simplified_summary['completions'][0]['data']['text']
                     print(simplified_summary+"SIMPLIFIED SUMMARY")
+            # create audio file        
+            data = {
+            "text": simplified_summary,
+            "model_id": "eleven_monolingual_v1",
+            "voice_settings": {
+                "stability": 0.5,
+                "similarity_boost": 0.5}
+            }
+            #create audio file from Eleven API
+            resp = requests.post(url_voice, json=data, headers=headers)
+            print("Response status code: ", resp.status_code)
+            with open(f'audio/{headline}.mp3', 'wb') as f:
+                print("Writing audio file")
+                # for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
+                #     if chunk:
+                f.write(resp.content)
+
             return jsonify(simplified_summary) 
         except Exception as e:
             return jsonify(message=str(e)), 500
@@ -267,7 +344,7 @@ def get_summaries():
                         "SELECT link, summary FROM summaries WHERE user_id = %s",
                         (user_id,)
                     )
-                    summaries = [{'link': link, 'summary': summary} for link, summary in cur.fetchall()]
+                    summaries = [{'link': link, 'summary': summary, 'headline': get_website_headline(link)} for link, summary in cur.fetchall()]
             return jsonify(summaries=summaries)
         except Exception as e:
             return jsonify(message=str(e)), 500
@@ -280,24 +357,27 @@ def receive_selected_text():
         selected_text = data.get('text')
         print(selected_text)
         
-        # Voice using Eleven API
-        voice= "Bella"
-        #voice="cloned/rodrigocl"
-        # Get current timestamp
-        timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 
-        # File name with timestamp
-        nombre_archivo = f"audio{timestamp}.mp3"
+        data = {
+            "text": selected_text,
+            "model_id": "eleven_monolingual_v1",
+            "voice_settings": {
+                "stability": 0.5,
+                "similarity_boost": 0.5
+            }
+        }
 
         try:
-            # Generate audio using Eleven API
-            audio = generate(text=selected_text, voice=voice, api_key=eleven_api_key)
-
-            # Save the audio to a file
-            with open(nombre_archivo, "wb") as file:
-                file.write(audio)
-
-            with open(nombre_archivo, "rb") as file:
+            #create audio file from Eleven API
+            response = requests.post(url_voice, json=data, headers=headers)
+            print("Response status code: ", response.status_code)
+            with open('./audio/output.mp3', 'wb') as f:
+                print("Writing audio file")
+                # for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
+                #     if chunk:
+                f.write(response.content)
+            #output audio file
+            with open('./audio/output.mp3', "rb") as file:
                 audio_data = file.read()
 
             # Ensure to delete the audio file after sending it to the client
@@ -309,11 +389,18 @@ def receive_selected_text():
             print(str(e))
             return jsonify(message='Error retrieving the audio from ElevenLabs'), 500
 
+@app.route('/play-summary',methods=["POST"])
+def play_summary():
+    if request.method == "POST":
+        headline = request.get_json()["headline"]
+        print(headline)
+        with open(f'./audio/{headline}.mp3', "rb") as file:
+            audio_data = file.read()
+            return audio_data, 200, {'Content-Type': 'audio/mpeg'}
 
-
-@app.route('/')
-def index():
-    return render_template('index.html')
+# @app.route('/')
+# def index():
+#     return render_template('index.html')
 
 
 if __name__ == '__main__':

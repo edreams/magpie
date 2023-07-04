@@ -2,8 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="popup.js 'self' 'unsafe-inline'">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="popup.js"></script>
+  <script src="../popup.js"></script>
+  <script src="../scripts/my_library.js"></script>
   <title>MagpieAI Newsletter</title>
   <style>
     /* Add your CSS styles here */
@@ -66,7 +68,7 @@
       color: #999;
     }
   </style>
-  <script>
+  <!-- <script>
     function speak(text) {
       const synth = window.speechSynthesis;
       const utterance = new SpeechSynthesisUtterance(text);
@@ -107,14 +109,17 @@
       footer.textContent = 'Sincerely,\n\nYour MagpieAI Newsletter Team';
       container.appendChild(footer);
     });
-  </script>
+  </script> -->
 </head>
 <body>
   <div class="container">
-    <h1>MagpieAI Newsletter ✨</h1>
-    <p>Welcome to our newsletter! Here are the summaries of your favorite articles.</p>
-    
+    <h1>MagpieAI Library ✨</h1>
+    <p>Welcome to Your Library! Here are the summaries of your favorite articles.</p>
+        <div id="summaries"></div>
     <p>Thank you for reading our newsletter!</p>
+
+    <p>Sincerely,</p>
+    <p>Your MagpieAI Newsletter Team</p>
   </div>
 </body>
 </html>
