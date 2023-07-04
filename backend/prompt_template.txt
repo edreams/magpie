@@ -6,17 +6,8 @@ Simple: The fund managers hope to get more return on their investments by borrow
 Jargon: I need to finish due diligence on this company before I can decide.
 Simple: I need to finish background research on this company before I can decide.
 
-Jargon: Can you please get this document over the wall?
-Simple: Can you please send this document?
-
-Jargon: Their legal team would like us to open our kimono regarding last year's deals.
-Simple: Their legal team would like us to share information about last year's deals.
-
 Jargon: We need to optimize our SEO to improve organic traffic.
 Simple: We need to improve our website's visibility on search engines to get more visitors without paid ads.
-
-Jargon: The software engineer is debugging the code to fix the issues.
-Simple: The software engineer is finding and fixing errors in the code to make the program work correctly.
 
 Jargon: We should implement agile project management to improve team collaboration.
 Simple: We should use a flexible and collaborative approach to project management to work better as a team.

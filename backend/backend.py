@@ -272,7 +272,7 @@ def simplified_summary():
                                         model="j2-ultra",  
                                         prompt=template+summary['summary'],
                                         numResults=1,
-                                        maxTokens=7000,
+                                        maxTokens=4000,
                                         temperature=0.4,
                                         topKReturn=0,
                                         topP=1,
