@@ -19,9 +19,5 @@
   ],
   "host_permissions": [
     "http://localhost/"
-  ],
-  "content_security_policy": ["script-src 'self' 'unsafe-eval' https://cdn.jsdelivr.net; object-src 'self'"],
+  ]
 }
-
-
-
