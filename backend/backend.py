@@ -21,7 +21,7 @@ load_dotenv()
 from bs4 import BeautifulSoup
 import os
 from flask import Flask, render_template
-from elevenlabs import generate
+#from elevenlabs import generate
 import datetime
 
 app = Flask(__name__)
