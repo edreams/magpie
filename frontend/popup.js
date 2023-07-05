@@ -224,7 +224,7 @@ function getSummaries() {
             sectionButton.target = '_blank';
             sectionButton.textContent = (i + 1) + ". " + headline;
 
-
+            //Audio Button
             var audioFile = `../backend/audio/${response.summaries[i].headline}.mp3`;
             const voiceButton = document.createElement('button');
             voiceButton.classList.add('voice-button');

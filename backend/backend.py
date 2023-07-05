@@ -170,11 +170,20 @@ def summarize_and_save():
         try:
             with connection_pool.getconn() as conn:
                 with conn.cursor() as cur:
+                    # Check if the URL already exists
+                    cur.execute("SELECT * FROM summaries WHERE link = %s", (url,))
+                    existing_row = cur.fetchone()
+                    if existing_row:
+                        # Delete the existing row
+                        cur.execute("DELETE FROM summaries WHERE link = %s", (url,))
+
+                    # Insert the new row
                     cur.execute(
                         "INSERT INTO summaries (user_id, link, summary) VALUES (%s, %s, %s)",
                         (user_id, url, summary["summary"])
                     )
                 conn.commit()
+
             print(summary['summary'])
 
             data = {
@@ -246,13 +255,8 @@ def simplified_summary():
             return (str(e), 400)
 
         try:
-            with connection_pool.getconn() as conn:
-                with conn.cursor() as cur:
-                    cur.execute(
-                        "INSERT INTO summaries (user_id, link, summary) VALUES (%s, %s, %s)",
-                        (user_id, url, summary["summary"])
-                    )
-                conn.commit()
+            
+
             #==================After saving the summary, get the latest summary, and send to Jurassic API ==================#
             with connection_pool.getconn() as conn:
                 with conn.cursor() as cur:
@@ -272,7 +276,7 @@ def simplified_summary():
                                         model="j2-ultra",  
                                         prompt=template+summary['summary'],
                                         numResults=1,
-                                        maxTokens=4000,
+                                        maxTokens=6000,
                                         temperature=0.4,
                                         topKReturn=0,
                                         topP=1,
@@ -304,6 +308,25 @@ def simplified_summary():
                     )
                     simplified_summary = simplified_summary['completions'][0]['data']['text']
                     print(simplified_summary+"SIMPLIFIED SUMMARY")
+                    #if simplified_summary == "":
+
+            #=========After getting the simplified summary, delete last row, save new to database ===========#
+            with connection_pool.getconn() as conn:
+                with conn.cursor() as cur:
+                    # Check if the URL already exists
+                    cur.execute("SELECT * FROM summaries WHERE link = %s", (url,))
+                    existing_row = cur.fetchone()
+                    if existing_row:
+                        # Delete the existing row
+                        cur.execute("DELETE FROM summaries WHERE link = %s", (url,))
+
+                    # Insert the new row
+                    cur.execute(
+                        "INSERT INTO summaries (user_id, link, summary) VALUES (%s, %s, %s)",
+                        (user_id, url, simplified_summary)
+                    )
+                conn.commit()
+
             # create audio file        
             data = {
             "text": simplified_summary,
@@ -356,8 +379,6 @@ def receive_selected_text():
         data = request.get_json()
         selected_text = data.get('text')
         print(selected_text)
-        
-
         data = {
             "text": selected_text,
             "model_id": "eleven_monolingual_v1",
@@ -396,11 +417,30 @@ def play_summary():
         print(headline)
         with open(f'./audio/{headline}.mp3', "rb") as file:
             audio_data = file.read()
+            print("audio sent to frontend")
             return audio_data, 200, {'Content-Type': 'audio/mpeg'}
 
 # @app.route('/')
 # def index():
 #     return render_template('index.html')
+
+@app.route('/refresh-db',methods=["GET"])
+def refresh_all():
+    if request.method == "GET":
+        # body = request.get_json()
+        # user_id = body['user_id']
+        try:
+            with connection_pool.getconn() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "DELETE FROM summaries",
+                    )
+                    cur.execute(
+                        "DELETE FROM user_links",
+                    )
+            return jsonify()
+        except Exception as e:
+            return jsonify(message=str(e)), 500
 
 
 if __name__ == '__main__':
