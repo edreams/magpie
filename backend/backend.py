@@ -2,15 +2,14 @@ import re
 from flask import Flask, request, jsonify
 from markupsafe import escape
 from flask_cors import CORS
-from psycopg2 import pool
+from psycopg2 import pool, Error
 import ai21
-import requests
-from bs4 import BeautifulSoup
+from urllib.parse import urlparse
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 import time
-import os  
+import os
 from dotenv import load_dotenv
 # from pydantic import BaseModel, root_validator, validator
 # from typing import Union, List, Optional
@@ -19,6 +18,11 @@ from dotenv import load_dotenv
 import requests
 import datetime
 load_dotenv()
+from bs4 import BeautifulSoup
+import os
+from flask import Flask, render_template
+from elevenlabs import generate
+import datetime
 
 app = Flask(__name__)
 CORS(app)
@@ -60,13 +64,13 @@ ai21.api_key = api_key
 def get_website_headline(url):
     # Send a GET request to the website
     response = requests.get(url)
-    
+
     # Create a BeautifulSoup object to parse the HTML content
     soup = BeautifulSoup(response.text, 'html.parser')
-    
+
     # Find the headline element in the HTML
     headline_element = soup.find('h1')  # Adjust this according to the specific website's HTML structure
-    
+
     if headline_element:
         headline = headline_element.text.strip()
         headline = headline.replace(' ', '_')
@@ -88,21 +92,28 @@ def valid_url(url):
 @app.route('/save-link', methods=["POST"])
 def save_link():
     """save_link
-    
+
     """
     if request.method == "POST":
         body = request.get_json()
         url = body['url']
         user_id = body['user_id']
-        with connection_pool.getconn() as conn:
-            with conn.cursor() as cur:
-                cur.execute("SELECT 1 FROM user_links WHERE user_id = %s AND link = %s", (user_id, url))
-                if cur.fetchone() is None:  # The link doesn't exist yet
-                    cur.execute("INSERT INTO user_links (user_id, link) VALUES (%s, %s)", (user_id, url))
-                    conn.commit()
-                    return jsonify(success=True)
-                else:
-                    return jsonify(message="Link already exists"), 409
+
+        if not valid_url(url):
+            return jsonify(message="Invalid URL"), 400
+
+        try:
+            with connection_pool.getconn() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT 1 FROM user_links WHERE user_id = %s AND link = %s", (user_id, url))
+                    if cur.fetchone() is None:
+                        cur.execute("INSERT INTO user_links (user_id, link) VALUES (%s, %s)", (user_id, url))
+                        conn.commit()
+                        return jsonify(success=True)
+                    else:
+                        return jsonify(message="Link already exists"), 409
+        except Error as e:
+            return jsonify(message=str(e)), 500
 
 
 @app.route('/get-links', methods=["POST"])
@@ -115,11 +126,15 @@ def get_links():
     if request.method == "POST":
         body = request.get_json()
         user_id = body['user_id']
-        with connection_pool.getconn() as conn:
-            with conn.cursor() as cur:
-                cur.execute("SELECT link FROM user_links WHERE user_id = %s", (user_id,))
-                links = [link for link, in cur.fetchall()]
-        return jsonify(links=links)
+
+        try:
+            with connection_pool.getconn() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT link FROM user_links WHERE user_id = %s", (user_id,))
+                    links = [link for link, in cur.fetchall()]
+            return jsonify(links=links)
+        except Error as e:
+            return jsonify(message=str(e)), 500
 
 #SUMMARY AND SAVE OR STANDARD SUMMARY BUTTON
 @app.route('/summarize-and-save', methods=["POST"])
@@ -133,109 +148,29 @@ def summarize_and_save():
         body = request.get_json()
         url = body['url']
         user_id = body['user_id']
-        headline = get_website_headline(url)
-        # # Configure Chrome options
-        # service = Service(executable_path=r'/usr/local/bin/chromedriver')
-        # chrome_options = Options()
-        # chrome_options.binary_location = r"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" 
-        # # Instantiate the Chrome Controller
-        # driver = webdriver.Chrome(service=service, options=chrome_options)
-        # # Navigate to url using selenium
-        # driver.get(url)
-        # # wait 1 seconds
-        # time.sleep(1)
-        # # Get the page content
-        # content = driver.page_source
-        # # close browser
-        # driver.quit()
-        # # Continue with the rest of the code
-        # soup = BeautifulSoup(content, 'html.parser')
-        # transcript = ' '.join(soup.stripped_strings)
-        # # Print the content of 'soup'
-        # print('soup content:')
-        # print(soup)
 
-        try:
-            # summary = ai21.Summarize.execute(
-            #     source=transcript,
-            #     sourceType="TEXT"
-            # )
-            summary = ai21.Summarize.execute(
-                source=url,
-                sourceType="URL"
-            ) #return a dictionary {'id', 'summary'}
-        except Exception as e:
-            return (str(e), 400)
-        
-        try:
-            with connection_pool.getconn() as conn:
-                with conn.cursor() as cur:
-                    cur.execute(
-                        "INSERT INTO summaries (user_id, link, summary) VALUES (%s, %s, %s)",
-                        (user_id, url, summary["summary"])
-                    )
-                conn.commit()
-            print(summary['summary'])
+        if not valid_url(url):
+            return jsonify(message="Invalid URL"), 400
 
-            data = {
-            "text": summary['summary'],
-            "model_id": "eleven_monolingual_v1",
-            "voice_settings": {
-                "stability": 0.5,
-                "similarity_boost": 0.5}
-            }
-
-            #create audio file from Eleven API
-            resp = requests.post(url_voice, json=data, headers=headers)
-            print("Response status code: ", resp.status_code)
-            with open(f"audio/{headline}.mp3", 'wb') as f:
-                print("Writing audio file")
-                # for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
-                #     if chunk:
-                f.write(resp.content)
-
-            return jsonify(summary['summary']) #, success=True
-        
-        except Exception as e:
-            print(str(e))
-            return jsonify(message=str(e)), 500
-
-#SIMPLE SUMMARY BUTTON
-@app.route('/simple-summary', methods=["POST"]) 
-def simplified_summary():
-    """simplified-summary
-    query 'summaries' table for one latest summary for a given user_id, link
-    generate simplified summary using Jurassic API
-    
-    """
-    if request.method == "POST":
-        body = request.get_json()
-        url = body['url']
-        user_id = body['user_id']
-        headline = get_website_headline(url)
-        #==================Web scraping==================#
-        # if not valid_url(url):
-        #     return jsonify(message="Invalid URL"), 400
-
-        # # Configure Chrome options
-        # chrome_options = Options()
-        # chrome_options.binary_location = os.getenv('CHROME_PATH')
-        # # Instantiate the Chrome Controller
-        # driver = webdriver.Chrome(os.getenv('CHROMEDRIVER_PATH'), options=chrome_options)
-        # # Navigate to url using selenium
-        # driver.get(url)
-        # # wait 10 seconds
-        # time.sleep(1)
-        # # Get the page content
-        # content = driver.page_source
-        # # close browser
-        # driver.quit()
-        # # Continue with the rest of the code
-        # soup = BeautifulSoup(content, 'html.parser')
-        # transcript = ' '.join(soup.stripped_strings)
-        # # Print the content of 'soup'
-        # print('soup content:')
-        # print(soup)
+        # Configurar opciones de Chrome
+        chrome_options = Options()
+        chrome_options.binary_location = os.getenv('CHROME_PATH')
+        # Crear una instancia del controlador de Chrome
+        driver = webdriver.Chrome(os.getenv('CHROMEDRIVER_PATH'), options=chrome_options)
+        # Navegar a la URL utilizando Selenium
+        driver.get(url)
+        # Esperar 10 segundos
+        time.sleep(10)
+        # Obtener el contenido de la página
+        content = driver.page_source
+        # Cerrar el navegador
+        driver.quit()
+        # Continuar con el resto del código
+        soup = BeautifulSoup(content, 'html.parser')
+        transcript = ' '.join(soup.stripped_strings)
+        # Imprimir el contenido de 'soup'
+        print('Contenido de soup:')
+        print(soup)
 
         try:
             summary = ai21.Summarize.execute(
@@ -244,6 +179,18 @@ def simplified_summary():
             )
         except Exception as e:
             return (str(e), 400)
+
+        try:
+            with connection_pool.getconn() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "INSERT INTO summaries (user_id, link, summary) VALUES (%s, %s, %s)",
+                        (user_id, url, summary["summary"])
+                    )
+                conn.commit()
+            return jsonify(success=True)
+        except Error as e:
+            return jsonify(message=str(e)), 500
 
         try:
             with connection_pool.getconn() as conn:
@@ -269,7 +216,7 @@ def simplified_summary():
                         template = file.read()
 
                     simplified_summary = ai21.Completion.execute(
-                                        model="j2-ultra",  
+                                        model="j2-ultra",
                                         prompt=template+summary['summary'],
                                         numResults=1,
                                         maxTokens=4000,
@@ -299,12 +246,12 @@ def simplified_summary():
                                             "applyToStopwords": False,
                                             "applyToWhitespaces": False,
                                             "applyToEmojis": False
-                                        },  
+                                        },
                                         stopSequences=["Now use simplify this context:","↵↵"]
                     )
                     simplified_summary = simplified_summary['completions'][0]['data']['text']
                     print(simplified_summary+"SIMPLIFIED SUMMARY")
-            # create audio file        
+            # create audio file
             data = {
             "text": simplified_summary,
             "model_id": "eleven_monolingual_v1",
@@ -321,17 +268,17 @@ def simplified_summary():
                 #     if chunk:
                 f.write(resp.content)
 
-            return jsonify(simplified_summary) 
+            return jsonify(simplified_summary)
         except Exception as e:
             return jsonify(message=str(e)), 500
 
 
 #MY LIBRARY BUTTON
-@app.route('/get-summaries', methods=["POST"]) 
+@app.route('/get-summaries', methods=["POST"])
 def get_summaries():
     """get_summaries
     query summaries table for all summaries for a given user_id
-    
+
     """
     if request.method == "POST":
         body = request.get_json()
@@ -356,7 +303,7 @@ def receive_selected_text():
         data = request.get_json()
         selected_text = data.get('text')
         print(selected_text)
-        
+
 
         data = {
             "text": selected_text,
@@ -406,3 +353,7 @@ def play_summary():
 if __name__ == '__main__':
    app.run(debug=True, host='0.0.0.0', port=5000)
 
+
+@app.route('/')
+def index():
+    return render_template('index.html')
