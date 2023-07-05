@@ -255,60 +255,60 @@ def simplified_summary():
             return (str(e), 400)
 
         try:
-            
+            # #============get the latest summary, and send to Jurassic API ==================#
+            # with connection_pool.getconn() as conn:
+            #     with conn.cursor() as cur:
+            #         cur.execute(
+            #             "SELECT link, summary FROM summaries WHERE user_id = %s ORDER BY ID DESC LIMIT 1", #try to get the latest summary
+            #             (user_id,)
+            #         )
+            #         summaries = [{'link': link, 'summary': summary} for link, summary in cur.fetchall()]
+            #         summary_ = summaries[-1] #get the first element of the list
 
-            #==================After saving the summary, get the latest summary, and send to Jurassic API ==================#
-            with connection_pool.getconn() as conn:
-                with conn.cursor() as cur:
-                    cur.execute(
-                        "SELECT link, summary FROM summaries WHERE user_id = %s ORDER BY ID DESC LIMIT 1", #try to get the latest summary
-                        (user_id,)
-                    )
-                    summaries = [{'link': link, 'summary': summary} for link, summary in cur.fetchall()]
-                    summary = summaries[-1] #get the first element of the list
+            ## send to Jurrasic for simplified summary
+            # Read the contents of the template file
+            with open('prompt_template.txt', 'r') as file:
+                template = file.read()
 
-                    ## send to Jurrasic for simplified summary
-                    # Read the contents of the template file
-                    with open('prompt_template.txt', 'r') as file:
-                        template = file.read()
-
-                    simplified_summary = ai21.Completion.execute(
-                                        model="j2-ultra",  
-                                        prompt=template+summary['summary'],
-                                        numResults=1,
-                                        maxTokens=6000,
-                                        temperature=0.4,
-                                        topKReturn=0,
-                                        topP=1,
-                                        countPenalty={
-                                            "scale": 0,
-                                            "applyToNumbers": False,
-                                            "applyToPunctuations": False,
-                                            "applyToStopwords": False,
-                                            "applyToWhitespaces": False,
-                                            "applyToEmojis": False
-                                        },
-                                        frequencyPenalty={
-                                            "scale": 0,
-                                            "applyToNumbers": False,
-                                            "applyToPunctuations": False,
-                                            "applyToStopwords": False,
-                                            "applyToWhitespaces": False,
-                                            "applyToEmojis": False
-                                        },
-                                        presencePenalty={
-                                            "scale": 0,
-                                            "applyToNumbers": False,
-                                            "applyToPunctuations": False,
-                                            "applyToStopwords": False,
-                                            "applyToWhitespaces": False,
-                                            "applyToEmojis": False
-                                        },  
-                                        stopSequences=["Now use simplify this context:","↵↵"]
-                    )
-                    simplified_summary = simplified_summary['completions'][0]['data']['text']
-                    print(simplified_summary+"SIMPLIFIED SUMMARY")
-                    #if simplified_summary == "":
+            simplified_summary = ai21.Completion.execute(
+                                model="j2-ultra",  
+                                prompt=template+summary['summary'],
+                                numResults=1,
+                                maxTokens=5000,
+                                temperature=0.4,
+                                topKReturn=0,
+                                topP=1,
+                                countPenalty={
+                                    "scale": 0,
+                                    "applyToNumbers": False,
+                                    "applyToPunctuations": False,
+                                    "applyToStopwords": False,
+                                    "applyToWhitespaces": False,
+                                    "applyToEmojis": False
+                                },
+                                frequencyPenalty={
+                                    "scale": 0,
+                                    "applyToNumbers": False,
+                                    "applyToPunctuations": False,
+                                    "applyToStopwords": False,
+                                    "applyToWhitespaces": False,
+                                    "applyToEmojis": False
+                                },
+                                presencePenalty={
+                                    "scale": 0,
+                                    "applyToNumbers": False,
+                                    "applyToPunctuations": False,
+                                    "applyToStopwords": False,
+                                    "applyToWhitespaces": False,
+                                    "applyToEmojis": False
+                                },  
+                                stopSequences=["Now use simplify this context:","↵↵"]
+            )
+            simplified_summary = simplified_summary['completions'][0]['data']['text']
+            print(simplified_summary+"SIMPLIFIED SUMMARY")
+            #incase the simplified summary is empty, return the original summary
+            if simplified_summary == "":
+                simplified_summary = summary
 
             #=========After getting the simplified summary, delete last row, save new to database ===========#
             with connection_pool.getconn() as conn:
@@ -346,7 +346,7 @@ def simplified_summary():
 
             return jsonify(simplified_summary) 
         except Exception as e:
-            return jsonify(message=str(e)), 500
+            return jsonify(summary['summary']), 200
 
 
 #MY LIBRARY BUTTON

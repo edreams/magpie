@@ -222,7 +222,7 @@ function getSummaries() {
             sectionButton.classList.add('section-button');
             sectionButton.href = response.summaries[i].link;
             sectionButton.target = '_blank';
-            sectionButton.textContent = (i + 1) + ". " + headline;
+            sectionButton.textContent = (i + 1) + ". " + headline.replace(/_/g, ' ');
 
             //Audio Button
             var audioFile = `../backend/audio/${response.summaries[i].headline}.mp3`;
