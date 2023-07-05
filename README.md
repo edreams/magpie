@@ -29,7 +29,7 @@
 		<li></li>
 		<li></li>
 		<li></li>
-		<li>/li>
+		<li></li>
 	</ol>
 	<h2>Credits</h2>
 	<p>This Chrome Extension uses the following technologies:</p>
