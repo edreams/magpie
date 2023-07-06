@@ -428,23 +428,23 @@ def play_summary():
 # def index():
 #     return render_template('index.html')
 
-@app.route('/refresh-db',methods=["GET"])
-def refresh_all():
-    if request.method == "GET":
-        # body = request.get_json()
-        # user_id = body['user_id']
-        try:
-            with connection_pool.getconn() as conn:
-                with conn.cursor() as cur:
-                    cur.execute(
-                        "DELETE FROM summaries",
-                    )
-                    cur.execute(
-                        "DELETE FROM user_links",
-                    )
-            return jsonify()
-        except Exception as e:
-            return jsonify(message=str(e)), 500
+# @app.route('/refresh-db',methods=["GET"])
+# def refresh_all():
+#     if request.method == "GET":
+#         # body = request.get_json()
+#         # user_id = body['user_id']
+#         try:
+#             with connection_pool.getconn() as conn:
+#                 with conn.cursor() as cur:
+#                     cur.execute(
+#                         "DELETE FROM summaries",
+#                     )
+#                     cur.execute(
+#                         "DELETE FROM user_links",
+#                     )
+#             return jsonify()
+#         except Exception as e:
+#             return jsonify(message=str(e)), 500
 
 
 if __name__ == '__main__':
