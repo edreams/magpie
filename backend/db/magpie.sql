@@ -1,22 +1,20 @@
 CREATE TABLE public.users (
- user_id serial PRIMARY KEY,   
- name text,  
- email text  
-);   
+ user_id bigserial PRIMARY KEY,
+ name text,
+ email text
+);
 
-CREATE TABLE public.user_links (  
- id serial PRIMARY KEY,
- user_id serial REFERENCES public.users (user_id) ON DELETE CASCADE,   
- link text,  
- FOREIGN KEY (user_id) REFERENCES public.users (user_id) ON DELETE CASCADE  
-);      
+CREATE TABLE public.user_links (
+ id bigserial PRIMARY KEY,
+ user_id bigint REFERENCES public.users (user_id) ON DELETE CASCADE,
+ link text
+);
 
-CREATE TABLE public.summaries (  
- id serial PRIMARY KEY,     
- user_id serial REFERENCES public.users (user_id) ON DELETE CASCADE,
- link text,      
- summary text,  
- FOREIGN KEY (user_id) REFERENCES public.users (user_id) ON DELETE CASCADE  
-);  
-
-INSERT INTO users (user_id) VALUES (123);
+CREATE TABLE public.summaries (
+ id bigserial PRIMARY KEY,
+ user_id bigint REFERENCES public.users (user_id) ON DELETE CASCADE,
+ link text,
+ type text,
+ summary text,
+ audio bytea
+);
