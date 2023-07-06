@@ -1,4 +1,5 @@
 import re
+import json
 from flask import Flask, request, jsonify
 from markupsafe import escape
 from flask_cors import CORS
@@ -6,26 +7,19 @@ from psycopg2 import pool
 import ai21
 import requests
 from bs4 import BeautifulSoup
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
 import time
 import os  
 from dotenv import load_dotenv
-# from pydantic import BaseModel, root_validator, validator
-# from typing import Union, List, Optional
-# from elevenlabs import clone, generate, play, set_api_key
-# from elevenlabs.api import History
+from elevenlabs import generate
 import requests
 import datetime
-from bs4 import BeautifulSoup
+from urllib.parse import urlparse
 from flask import Flask, render_template
-#from elevenlabs import generate
-import datetime
 load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
+print(os.getcwd())
 # Constants
 AUDIO_FORMAT = "audio/mp3"
 # Environment variables
@@ -41,9 +35,52 @@ connection_pool = pool.SimpleConnectionPool(
     port=5432,
     user='postgres',
     password=db_password,  # Use the database password from the environment variable
-    dbname='magpieai_db'
+    dbname='magpieai_db5'
 )
 
+def create_connection():
+    connection = connection_pool.getconn()
+    return connection
+
+@app.route('/create-user', methods=['POST'])
+def create_user():
+    data = request.get_json()
+    user_id = data.get('user_id')
+    print(user_id)
+    if not user_id:
+        return jsonify({'error': 'User ID is required.'}), 400
+
+    try:
+        connection = create_connection()
+        cursor = connection.cursor()
+
+        # Verificar si el usuario ya existe
+        query = "SELECT * FROM users WHERE user_id = %s"
+        cursor.execute(query, (user_id,))
+        existing_user = cursor.fetchone()
+
+        if existing_user:
+            return jsonify({'error': 'User already exists.'}), 409
+
+        # Crear un nuevo usuario
+        query = "INSERT INTO users (user_id) VALUES (%s) RETURNING user_id"
+        cursor.execute(query, (user_id,))
+        new_user_id = cursor.fetchone()[0]
+
+        connection.commit()
+
+        return jsonify({'user_id': new_user_id}), 200
+
+    except (Exception, connection.Error) as error:
+        return jsonify({'error': 'Error creating user.'}), 500
+
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection_pool.putconn(connection)
+            
+            
 # Voice using Eleven API
 voice= "Bella"
 #voice="cloned/rodrigocl"
@@ -97,7 +134,12 @@ def save_link():
     if request.method == "POST":
         body = request.get_json()
         url = body['url']
-        user_id = body['user_id']
+        user_id_json = json.loads(body['user_id'])  # parse the JSON string
+        user_id = user_id_json['user_id']  # get the value of user_id
+        print("user_id")
+        print(user_id)
+        print(type(user_id))
+        headline = get_website_headline(url)
         with connection_pool.getconn() as conn:
             with conn.cursor() as cur:
                 cur.execute("SELECT 1 FROM user_links WHERE user_id = %s AND link = %s", (user_id, url))
@@ -118,7 +160,12 @@ def get_links():
     """
     if request.method == "POST":
         body = request.get_json()
-        user_id = body['user_id']
+        user_id_json = json.loads(body['user_id'])  # parse the JSON string
+        user_id = user_id_json['user_id']  # get the value of user_id
+        print("user_id")
+        print(user_id)
+        print(type(user_id))
+        
         with connection_pool.getconn() as conn:
             with conn.cursor() as cur:
                 cur.execute("SELECT link FROM user_links WHERE user_id = %s", (user_id,))
@@ -128,90 +175,72 @@ def get_links():
 #SUMMARY AND SAVE OR STANDARD SUMMARY BUTTON
 @app.route('/summarize-and-save', methods=["POST"])
 def summarize_and_save():
-    """_summary_and_save_
-
-    Returns:
-        _type_: _description_
-    """
     if request.method == "POST":
         body = request.get_json()
         url = body['url']
-        user_id = body['user_id']
-        headline = get_website_headline(url)
-        # # Configure Chrome options
-        # service = Service(executable_path=r'/usr/local/bin/chromedriver')
-        # chrome_options = Options()
-        # chrome_options.binary_location = r"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" 
-        # # Instantiate the Chrome Controller
-        # driver = webdriver.Chrome(service=service, options=chrome_options)
-        # # Navigate to url using selenium
-        # driver.get(url)
-        # # wait 1 seconds
-        # time.sleep(1)
-        # # Get the page content
-        # content = driver.page_source
-        # # close browser
-        # driver.quit()
-        # # Continue with the rest of the code
-        # soup = BeautifulSoup(content, 'html.parser')
-        # transcript = ' '.join(soup.stripped_strings)
-        # # Print the content of 'soup'
-        # print('soup content:')
-        # print(soup)
+        user_id_json = json.loads(body['user_id'])
+        user_id = user_id_json['user_id']
+        content = body['content']
 
+        with connection_pool.getconn() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT * FROM user_links WHERE user_id = %s AND link = %s",
+                    (user_id, url)
+                )
+                existing_link = cur.fetchone()
+
+                if not existing_link:
+                    cur.execute(
+                        "INSERT INTO user_links (user_id, link) VALUES (%s, %s)",
+                        (user_id, url)
+                    )
+                    conn.commit()
+                else: 
+                    print("existing_link")
+                    print(existing_link)
+                    cur.execute(
+                        "SELECT summary FROM summaries WHERE user_id = %s AND type = 'standard'",
+                        (existing_link[0],)
+                    )
+                    summary = cur.fetchone()
+
+                    if summary:
+                        return jsonify(summary), 200
+                    else:
+                        return jsonify(message="No se encontró el resumen correspondiente al enlace y usuario."), 404
+
+        headline = get_website_headline(url)
+        print(headline)
         try:
-            # summary = ai21.Summarize.execute(
-            #     source=transcript,
-            #     sourceType="TEXT"
-            # )
             summary = ai21.Summarize.execute(
-                source=url,
-                sourceType="URL"
-            ) #return a dictionary {'id', 'summary'}
+                 source=content,
+                 sourceType="TEXT"
+             )
+            print("existing_link")
+            print(existing_link)
         except Exception as e:
             return (str(e), 400)
         
         try:
             with connection_pool.getconn() as conn:
                 with conn.cursor() as cur:
-                    # Check if the URL already exists
-                    cur.execute("SELECT * FROM summaries WHERE link = %s", (url,))
-                    existing_row = cur.fetchone()
-                    if existing_row:
-                        # Delete the existing row
-                        cur.execute("DELETE FROM summaries WHERE link = %s", (url,))
-
-                    # Insert the new row
                     cur.execute(
-                        "INSERT INTO summaries (user_id, link, summary) VALUES (%s, %s, %s)",
-                        (user_id, url, summary["summary"])
+                        "INSERT INTO summaries (user_id, link, type, summary, audio) VALUES (%s, %s, %s, %s, %s)",
+                        (user_id, url, 'standard', summary["summary"], None)
                     )
-                conn.commit()
+                    conn.commit()
 
-            print(summary['summary'])
-
-            data = {
-            "text": summary['summary'],
-            "model_id": "eleven_monolingual_v1",
-            "voice_settings": {
-                "stability": 0.5,
-                "similarity_boost": 0.5}
-            }
-
-            #create audio file from Eleven API
-            resp = requests.post(url_voice, json=data, headers=headers)
-            print("Response status code: ", resp.status_code)
-            with open(f"audio/{headline}.mp3", 'wb') as f:
-                print("Writing audio file")
-                # for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
-                #     if chunk:
-                f.write(resp.content)
-
-            return jsonify(summary['summary']) #, success=True
+            try:
+                print(summary)
+                print(summary["summary"])
+                return jsonify(summary["summary"]) 
+            except Exception as e:
+                return jsonify(message='Error retrieving the audio'), 500
         
         except Exception as e:
-            print(str(e))
             return jsonify(message=str(e)), 500
+
 
 #SIMPLE SUMMARY BUTTON
 @app.route('/simple-summary', methods=["POST"]) 
@@ -224,133 +253,117 @@ def simplified_summary():
     if request.method == "POST":
         body = request.get_json()
         url = body['url']
-        user_id = body['user_id']
-        headline = get_website_headline(url)
-        #==================Web scraping==================#
-        # if not valid_url(url):
-        #     return jsonify(message="Invalid URL"), 400
+        user_id_json = json.loads(body['user_id'])  # parse the JSON string
+        user_id = user_id_json['user_id']  # get the value of user_id
+        transcript = body['content']
+        print("transcript")
+        print(transcript)
 
-        # # Configure Chrome options
-        # chrome_options = Options()
-        # chrome_options.binary_location = os.getenv('CHROME_PATH')
-        # # Instantiate the Chrome Controller
-        # driver = webdriver.Chrome(os.getenv('CHROMEDRIVER_PATH'), options=chrome_options)
-        # # Navigate to url using selenium
-        # driver.get(url)
-        # # wait 10 seconds
-        # time.sleep(1)
-        # # Get the page content
-        # content = driver.page_source
-        # # close browser
-        # driver.quit()
-        # # Continue with the rest of the code
-        # soup = BeautifulSoup(content, 'html.parser')
-        # transcript = ' '.join(soup.stripped_strings)
-        # # Print the content of 'soup'
-        # print('soup content:')
-        # print(soup)
+        print("user_id")
+        print(user_id)
+        print(type(user_id))
+        headline = get_website_headline(url)
+                # Verificar si el enlace ya existe para el usuario actual
+        with connection_pool.getconn() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT * FROM user_links WHERE user_id = %s AND link = %s",
+                    (user_id, url)
+                )
+                existing_link = cur.fetchone()
+
+                if not existing_link:
+                    # Si el enlace no existe, lo creamos
+                    cur.execute(
+                        "INSERT INTO user_links (user_id, link) VALUES (%s, %s)",
+                        (user_id, url)
+                    )
+                    conn.commit()
+                
+
 
         try:
             summary = ai21.Summarize.execute(
-                source=url,
-                sourceType="URL"
+                source=transcript,
+                sourceType="TEXT"
             )
         except Exception as e:
             return (str(e), 400)
 
         try:
-            # #============get the latest summary, and send to Jurassic API ==================#
-            # with connection_pool.getconn() as conn:
-            #     with conn.cursor() as cur:
-            #         cur.execute(
-            #             "SELECT link, summary FROM summaries WHERE user_id = %s ORDER BY ID DESC LIMIT 1", #try to get the latest summary
-            #             (user_id,)
-            #         )
-            #         summaries = [{'link': link, 'summary': summary} for link, summary in cur.fetchall()]
-            #         summary_ = summaries[-1] #get the first element of the list
-
-            ## send to Jurrasic for simplified summary
-            # Read the contents of the template file
-            with open('prompt_template.txt', 'r') as file:
-                template = file.read()
-
-            simplified_summary = ai21.Completion.execute(
-                                model="j2-ultra",  
-                                prompt=template+summary['summary'],
-                                numResults=1,
-                                maxTokens=5000,
-                                temperature=0.4,
-                                topKReturn=0,
-                                topP=1,
-                                countPenalty={
-                                    "scale": 0,
-                                    "applyToNumbers": False,
-                                    "applyToPunctuations": False,
-                                    "applyToStopwords": False,
-                                    "applyToWhitespaces": False,
-                                    "applyToEmojis": False
-                                },
-                                frequencyPenalty={
-                                    "scale": 0,
-                                    "applyToNumbers": False,
-                                    "applyToPunctuations": False,
-                                    "applyToStopwords": False,
-                                    "applyToWhitespaces": False,
-                                    "applyToEmojis": False
-                                },
-                                presencePenalty={
-                                    "scale": 0,
-                                    "applyToNumbers": False,
-                                    "applyToPunctuations": False,
-                                    "applyToStopwords": False,
-                                    "applyToWhitespaces": False,
-                                    "applyToEmojis": False
-                                },  
-                                stopSequences=["Now use simplify this context:","↵↵"]
-            )
-            simplified_summary = simplified_summary['completions'][0]['data']['text']
-            print(simplified_summary+"SIMPLIFIED SUMMARY")
-            #incase the simplified summary is empty, return the original summary
-            if simplified_summary == "":
-                simplified_summary = summary
-
-            #=========After getting the simplified summary, delete last row, save new to database ===========#
             with connection_pool.getconn() as conn:
                 with conn.cursor() as cur:
-                    # Check if the URL already exists
-                    cur.execute("SELECT * FROM summaries WHERE link = %s", (url,))
-                    existing_row = cur.fetchone()
-                    if existing_row:
-                        # Delete the existing row
-                        cur.execute("DELETE FROM summaries WHERE link = %s", (url,))
-
-                    # Insert the new row
+                    # cur.execute(
+                    #     "INSERT INTO summaries (user_id, link, summary) VALUES (%s, %s, %s)",
+                    #     (user_id, url, summary["summary"])
                     cur.execute(
-                        "INSERT INTO summaries (user_id, link, summary) VALUES (%s, %s, %s)",
-                        (user_id, url, simplified_summary)
+                        "INSERT INTO summaries (user_id, link, type, summary, audio) VALUES (%s, %s, %s, %s, %s)",
+                        (user_id, url, 'simple', summary["summary"], None)
                     )
                 conn.commit()
+            #==================After saving the summary, get the latest summary, and send to Jurassic API ==================#
+            with connection_pool.getconn() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "SELECT link, summary FROM summaries WHERE user_id = %s ORDER BY ID DESC LIMIT 1", #try to get the latest summary
+                        (user_id,)
+                    )
+                    summaries = [{'link': link, 'summary': summary} for link, summary in cur.fetchall()]
+                    summary = summaries[-1] #get the first element of the list
 
-            # create audio file        
-            data = {
-            "text": simplified_summary,
-            "model_id": "eleven_monolingual_v1",
-            "voice_settings": {
-                "stability": 0.5,
-                "similarity_boost": 0.5}
-            }
-            #create audio file from Eleven API
-            resp = requests.post(url_voice, json=data, headers=headers)
-            print("Response status code: ", resp.status_code)
-            with open(f'audio/{headline}.mp3', 'wb') as f:
-                print("Writing audio file")
-                # for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
-                #     if chunk:
-                f.write(resp.content)
+                    ## send to Jurrasic for simplified summary
+                    # Read the contents of the template file
+                    with open('prompt_template.txt', 'r') as file:
+                        template = file.read()
 
-            return jsonify(simplified_summary) 
+                    simplified_summary = ai21.Completion.execute(
+                                        model="j2-ultra",  
+                                        prompt=template+summary['summary'],
+                                        numResults=1,
+                                        maxTokens=4000,
+                                        temperature=0.4,
+                                        topKReturn=0,
+                                        topP=1,
+                                        countPenalty={
+                                            "scale": 0,
+                                            "applyToNumbers": False,
+                                            "applyToPunctuations": False,
+                                            "applyToStopwords": False,
+                                            "applyToWhitespaces": False,
+                                            "applyToEmojis": False
+                                        },
+                                        frequencyPenalty={
+                                            "scale": 0,
+                                            "applyToNumbers": False,
+                                            "applyToPunctuations": False,
+                                            "applyToStopwords": False,
+                                            "applyToWhitespaces": False,
+                                            "applyToEmojis": False
+                                        },
+                                        presencePenalty={
+                                            "scale": 0,
+                                            "applyToNumbers": False,
+                                            "applyToPunctuations": False,
+                                            "applyToStopwords": False,
+                                            "applyToWhitespaces": False,
+                                            "applyToEmojis": False
+                                        },  
+                                        stopSequences=["Now use simplify this context:","↵↵"]
+                    )
+                    simplified_summary = simplified_summary['completions'][0]['data']['text']
+                    print(simplified_summary+"SIMPLIFIED SUMMARY")
+
+            #print(simplified_summary)
+
+
+            try:
+                #audio_data, status_code, headers = generate_audio(headline+"_simple", simplified_summary)
+                return jsonify(simplified_summary) 
+            except Exception as e:
+                print(str(e))
+                return jsonify(message='Error retrieving the audio from ElevenLabs'), 500
         except Exception as e:
-            return jsonify(summary['summary']), 200
+            return jsonify(message=str(e)), 500
 
 
 #MY LIBRARY BUTTON
@@ -362,7 +375,12 @@ def get_summaries():
     """
     if request.method == "POST":
         body = request.get_json()
-        user_id = body['user_id']
+        user_id_json = json.loads(body['user_id'])  # parse the JSON string
+        user_id = user_id_json['user_id']  # get the value of user_id
+        print("user_id")
+        print(user_id)
+        print(type(user_id))
+        
 
         try:
             with connection_pool.getconn() as conn:
@@ -383,33 +401,9 @@ def receive_selected_text():
         data = request.get_json()
         selected_text = data.get('text')
         print(selected_text)
-        data = {
-            "text": selected_text,
-            "model_id": "eleven_monolingual_v1",
-            "voice_settings": {
-                "stability": 0.5,
-                "similarity_boost": 0.5
-            }
-        }
-
         try:
-            #create audio file from Eleven API
-            response = requests.post(url_voice, json=data, headers=headers)
-            print("Response status code: ", response.status_code)
-            with open('./audio/output.mp3', 'wb') as f:
-                print("Writing audio file")
-                # for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
-                #     if chunk:
-                f.write(response.content)
-            #output audio file
-            with open('./audio/output.mp3', "rb") as file:
-                audio_data = file.read()
-
-            # Ensure to delete the audio file after sending it to the client
-            #os.remove("audio.mp3")
-
-            # Return the audio as a response
-            return audio_data, 200, {'Content-Type': 'audio/mpeg'}
+            audio_data, status_code, headers = generate_audio("output",selected_text)
+            return audio_data, status_code, headers 
         except Exception as e:
             print(str(e))
             return jsonify(message='Error retrieving the audio from ElevenLabs'), 500
@@ -419,34 +413,53 @@ def play_summary():
     if request.method == "POST":
         headline = request.get_json()["headline"]
         print(headline)
-        with open(f'./audio/{headline}.mp3', "rb") as file:
-            audio_data = file.read()
-            print("audio sent to frontend")
-            return audio_data, 200, {'Content-Type': 'audio/mpeg'}
+        # with open(f'./audio/{headline}.mp3', "rb") as file:
+        #     audio_data = file.read()
+        #     return audio_data, 200, {'Content-Type': 'audio/mpeg'}
+        try:
+            audio_data, status_code, headers = generate_audio(headline,headline)
+            return audio_data, status_code, headers 
+        except Exception as e:
+            print(str(e))
+            return jsonify(message='Error retrieving the audio from ElevenLabs'), 500
 
-# @app.route('/')
-# def index():
-#     return render_template('index.html')
+@app.route('/')
+def index():
+     return render_template('index.html')
 
-# @app.route('/refresh-db',methods=["GET"])
-# def refresh_all():
-#     if request.method == "GET":
-#         # body = request.get_json()
-#         # user_id = body['user_id']
-#         try:
-#             with connection_pool.getconn() as conn:
-#                 with conn.cursor() as cur:
-#                     cur.execute(
-#                         "DELETE FROM summaries",
-#                     )
-#                     cur.execute(
-#                         "DELETE FROM user_links",
-#                     )
-#             return jsonify()
-#         except Exception as e:
-#             return jsonify(message=str(e)), 500
+def generate_audio(headline, selected_text):
+    # Voice using Eleven API 
+    voice= "Bella"                                                                                                                                                                                                                             
+
+    # Get current timestamp 
+    timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S") 
+
+    # File name with timestamp 
+    #nombre_archivo = f"audio{timestamp}.mp3" 
+    nombre_archivo = f'./audio/{headline}.mp3'
+    try: 
+        # Generate audio using Eleven API 
+        audio = generate(text=selected_text, voice=voice, api_key=eleven_api_key) 
+
+        # Save the audio to a file 
+        with open(nombre_archivo, "wb") as file: 
+            file.write(audio) 
+
+        with open(nombre_archivo, "rb") as file: 
+            audio_data = file.read() 
+
+        # Ensure to delete the audio file after sending it to the client 
+        #os.remove("audio.mp3") 
+
+        # Return the audio as a response 
+        return audio_data, 200, {'Content-Type': 'audio/mpeg'} 
+
+    except Exception as e: 
+        print(str(e))
+        return jsonify(message='Error retrieving the audio from ElevenLabs'), 500
+
 
 
 if __name__ == '__main__':
-   app.run(debug=True, host='0.0.0.0', port=5000)
+   app.run(debug=True, host='0.0.0.0', port=8501)
 
