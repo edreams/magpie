@@ -183,23 +183,123 @@ def summarize_and_save():
         try:
             with connection_pool.getconn() as conn:
                 with conn.cursor() as cur:
+                    # Check if the URL already exists
+                    cur.execute("SELECT * FROM summaries WHERE link = %s", (url,))
+                    existing_row = cur.fetchone()
+                    if existing_row:
+                        # Delete the existing row
+                        cur.execute("DELETE FROM summaries WHERE link = %s", (url,))
+
+                    # Insert the new row
                     cur.execute(
                         "INSERT INTO summaries (user_id, link, summary) VALUES (%s, %s, %s)",
                         (user_id, url, summary["summary"])
                     )
                 conn.commit()
-            return jsonify(success=True)
-        except Error as e:
+
+
+            print(summary['summary'])
+
+            data = {
+            "text": summary['summary'],
+            "model_id": "eleven_monolingual_v1",
+            "voice_settings": {
+                "stability": 0.5,
+                "similarity_boost": 0.5}
+            }
+
+            #create audio file from Eleven API
+            resp = requests.post(url_voice, json=data, headers=headers)
+            print("Response status code: ", resp.status_code)
+            with open(f"audio/{headline}.mp3", 'wb') as f:
+                print("Writing audio file")
+                # for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
+                #     if chunk:
+                f.write(resp.content)
+
+            return jsonify(summary['summary']) #, success=True
+        
+        except Exception as e:
+            print(str(e))
+
             return jsonify(message=str(e)), 500
 
         try:
+            # #============get the latest summary, and send to Jurassic API ==================#
+            # with connection_pool.getconn() as conn:
+            #     with conn.cursor() as cur:
+            #         cur.execute(
+            #             "SELECT link, summary FROM summaries WHERE user_id = %s ORDER BY ID DESC LIMIT 1", #try to get the latest summary
+            #             (user_id,)
+            #         )
+            #         summaries = [{'link': link, 'summary': summary} for link, summary in cur.fetchall()]
+            #         summary_ = summaries[-1] #get the first element of the list
+
+            ## send to Jurrasic for simplified summary
+            # Read the contents of the template file
+            with open('prompt_template.txt', 'r') as file:
+                template = file.read()
+
+            simplified_summary = ai21.Completion.execute(
+                                model="j2-ultra",  
+                                prompt=template+summary['summary'],
+                                numResults=1,
+                                maxTokens=5000,
+                                temperature=0.4,
+                                topKReturn=0,
+                                topP=1,
+                                countPenalty={
+                                    "scale": 0,
+                                    "applyToNumbers": False,
+                                    "applyToPunctuations": False,
+                                    "applyToStopwords": False,
+                                    "applyToWhitespaces": False,
+                                    "applyToEmojis": False
+                                },
+                                frequencyPenalty={
+                                    "scale": 0,
+                                    "applyToNumbers": False,
+                                    "applyToPunctuations": False,
+                                    "applyToStopwords": False,
+                                    "applyToWhitespaces": False,
+                                    "applyToEmojis": False
+                                },
+                                presencePenalty={
+                                    "scale": 0,
+                                    "applyToNumbers": False,
+                                    "applyToPunctuations": False,
+                                    "applyToStopwords": False,
+                                    "applyToWhitespaces": False,
+                                    "applyToEmojis": False
+                                },  
+                                stopSequences=["Now use simplify this context:","↵↵"]
+            )
+            simplified_summary = simplified_summary['completions'][0]['data']['text']
+            print(simplified_summary+"SIMPLIFIED SUMMARY")
+            #incase the simplified summary is empty, return the original summary
+            if simplified_summary == "":
+                simplified_summary = summary
+
+            #=========After getting the simplified summary, delete last row, save new to database ===========#
             with connection_pool.getconn() as conn:
                 with conn.cursor() as cur:
+                    # Check if the URL already exists
+                    cur.execute("SELECT * FROM summaries WHERE link = %s", (url,))
+                    existing_row = cur.fetchone()
+                    if existing_row:
+                        # Delete the existing row
+                        cur.execute("DELETE FROM summaries WHERE link = %s", (url,))
+
+                    # Insert the new row
                     cur.execute(
                         "INSERT INTO summaries (user_id, link, summary) VALUES (%s, %s, %s)",
-                        (user_id, url, summary["summary"])
+                        (user_id, url, simplified_summary)
                     )
                 conn.commit()
+
+
+            # create audio file        
+=======
             #==================After saving the summary, get the latest summary, and send to Jurassic API ==================#
             with connection_pool.getconn() as conn:
                 with conn.cursor() as cur:
@@ -252,6 +352,7 @@ def summarize_and_save():
                     simplified_summary = simplified_summary['completions'][0]['data']['text']
                     print(simplified_summary+"SIMPLIFIED SUMMARY")
             # create audio file
+
             data = {
             "text": simplified_summary,
             "model_id": "eleven_monolingual_v1",
@@ -270,7 +371,7 @@ def summarize_and_save():
 
             return jsonify(simplified_summary)
         except Exception as e:
-            return jsonify(message=str(e)), 500
+            return jsonify(summary['summary']), 200
 
 
 #MY LIBRARY BUTTON
@@ -303,7 +404,6 @@ def receive_selected_text():
         data = request.get_json()
         selected_text = data.get('text')
         print(selected_text)
-
 
         data = {
             "text": selected_text,
@@ -343,11 +443,30 @@ def play_summary():
         print(headline)
         with open(f'./audio/{headline}.mp3', "rb") as file:
             audio_data = file.read()
+            print("audio sent to frontend")
             return audio_data, 200, {'Content-Type': 'audio/mpeg'}
 
 # @app.route('/')
 # def index():
 #     return render_template('index.html')
+
+@app.route('/refresh-db',methods=["GET"])
+def refresh_all():
+    if request.method == "GET":
+        # body = request.get_json()
+        # user_id = body['user_id']
+        try:
+            with connection_pool.getconn() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "DELETE FROM summaries",
+                    )
+                    cur.execute(
+                        "DELETE FROM user_links",
+                    )
+            return jsonify()
+        except Exception as e:
+            return jsonify(message=str(e)), 500
 
 
 if __name__ == '__main__':

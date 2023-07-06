@@ -6,7 +6,7 @@
       rel="stylesheet"
       type="text/css"
     />
-    <title>Save and Summarize Links</title>
+    <title>MAGPIE AI</title>
     <meta charset="UTF-8" />
     <script src="popup.js"></script>
     <style>
@@ -32,7 +32,10 @@
         margin-top: 10px;
       }
 
-      #transcript, #summaries, #summary, #status {
+      #transcript,
+      #summaries,
+      #summary,
+      #status {
         margin-top: 10px;
         font-size: 1.2rem;
         line-height: 1.5;
@@ -53,20 +56,38 @@
       .team-name {
         text-align: center;
       }
+
+      /* Footer styles */
+      footer {
+        font-size: 0.8rem;
+        background-color: #fff;
+        color: #000;
+        padding: 10px;
+        text-align: right; /* Align content to the right */
+        display: flex; /* Enable flexbox layout */
+        justify-content: flex-end; /* Align items to the right within the flex container */
+        align-items: center; /* Vertically center items within the flex container */
+      }
+
+      footer img {
+        margin-right: 10px; /* Add some spacing between the logo and text */
+        height: 40px; /* Adjust the height of the logo as needed */
+      }
     </style>
   </head>
   <body>
-
-    <img src="icon.png" alt="Icon" style="display: block; margin: 0 auto; width: 100px; height: 100px;">
-    <p class="team-name">AI21 Hackathon Team</p>
+    <img
+      src="icon.png"
+      alt="Icon"
+      style="display: block; margin: 0 auto; width: 120px; height: 120px;"
+    />
 
     <div id="button-container">
-      <button id="save-link" class="btn btn-wide rounded-lg">Bookmark</button>
-      <button id="standard-summary" class="btn btn-accent btn-wide rounded-lg">Standard Summary</button>
-      <button id="simple-summary" class="btn btn-accent btn-wide rounded-lg">Simple Summary</button>
-      <button id="get-summaries" class="btn btn-accent btn-wide rounded-lg">My Library</button>
-      <button id="send-text" class="btn btn-accent btn-wide rounded-lg">Play Selected Text</button>
-
+      <button id="save-link" class="btn btn-wide rounded-lg" style="background-color: #0D90AF">Bookmark</button>
+      <button id="standard-summary" class="btn btn-wide rounded-lg" style="background-color: #000941">Standard Summary</button>
+      <button id="simple-summary" class="btn btn-wide rounded-lg" style="background-color: #000941">Simple Summary</button>
+      <button id="send-text" class="btn btn-wide rounded-lg" style="background-color: #000941">Play Selected Text</button>
+      <button id="get-summaries" class="btn btn-wide rounded-lg" style="background-color: #0D90AF">My Library</button>
     </div>
 
     <div id="status"></div>
@@ -75,9 +96,12 @@
     <div class="divider"></div>
 
     <div id="qna" style="margin-top: 1rem"></div>
+
+    <!-- Footer -->
+    <footer>
+      <span>powered by   </span>
+      <img src="/images/v121_15.png" alt="Logo">
+      
+    </footer>
   </body>
 </html>
-
-    <!-- <div id="qna" style="margin-top: 1rem"></div> 
-  </body>
-</html>-->
