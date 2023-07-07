@@ -5,7 +5,7 @@
 <body>
 	<h1>MAGPIE AI</h1>
 	<p>Introducing our groundbreaking Chrome Extension plugin <a href="https://http://130.211.217.70/">Magpie AI</a> designed to revolutionize the way busy professionals stay informed amidst their hectic schedules. In today's information-driven world, newsletters and articles flood our inboxes, overwhelming us with valuable insights buried in lengthy content. Our plugin offers a game-changing solution, effortlessly summarizing and distilling this wealth of information into concise, digestible nuggets of knowledge read to you like an audiobook.</p>
-	<p>This project was made for the <a href="https://lablab.ai/event/plug-into-ai-with-ai21">Plug into AI with AI21</a> in July 2023 organized by <a href="https://lablab.ai"><img src="https://lablab.ai/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Flablab-logo.8496f44c.png&w=48&q=75" alt="lablab.ai"></a>.</p>
+	<p>This project was made for the <a href="https://lablab.ai/event/plug-into-ai-with-ai21">Plug into AI with AI21</a> in July 2023 organized by  <a href="https://www.ai21.com/" title="AI21" ><img src="https://assets-global.website-files.com/60fd4503684b466578c0d307/60ff0505b0dbe005faac0c84_AI21%20Logo.svg" alt="AI21 API" ></a> And <a href="https://lablab.ai"><img src="https://lablab.ai/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Flablab-logo.8496f44c.png&w=48&q=75" alt="lablab.ai"></a>.</p>
 	<a href="https://youtu.be/GSGctq-CIj4" target="_blank"><img src="https://i.imgur.com/Jk1yIAT.png" ></a>
 	<h2>Features</h2>
 	<ul>
