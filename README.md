@@ -6,7 +6,7 @@
 	<h1>MAGPIE AI</h1>
 	<p>Introducing our groundbreaking Chrome Extension plugin <a href="https://http://130.211.217.70/">Magpie AI</a> designed to revolutionize the way busy professionals stay informed amidst their hectic schedules. In today's information-driven world, newsletters and articles flood our inboxes, overwhelming us with valuable insights buried in lengthy content. Our plugin offers a game-changing solution, effortlessly summarizing and distilling this wealth of information into concise, digestible nuggets of knowledge read to you like an audiobook.</p>
 	<p>This project was made for the <a href="https://lablab.ai/event/plug-into-ai-with-ai21">Plug into AI with AI21</a> in July 2023 organized by <a href="https://lablab.ai">lablab.ai</a>.</p>
-![IMAGEN YOUTUBE](https://github.com/edreams/magpie/assets/6780638/cdf1775f-fc75-422d-9948-91b5c3f2da98)
+
 
 	<h2>Features</h2>
 	<ul>
