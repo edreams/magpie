@@ -16,7 +16,7 @@
 	</ul>
 	<h2>Installation</h2>
 	<ol>
-		<li>Download this <a href="http://130.211.217.70/plugin.tar.gz">Zip file</a></li>
+		<li>Download this <a href="http://130.211.217.70/plugin.tar.gz">Zip file</a> (if Chrome does not allow, please copy the address and paste it to the browser, or use our page <a href="https://http://130.211.217.70/">Magpie AI</a>)</li>
 		<li>Extract the ZIP file</li>
 		<li>Open Google Chrome and navigate to chrome://extensions/</li>
 		<li>Enable Developer Mode by clicking the toggle switch on the top right corner of the page</li>
