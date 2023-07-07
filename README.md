@@ -6,7 +6,7 @@
 	<h1>MAGPIE AI</h1>
 	<p>Introducing our groundbreaking Chrome Extension plugin Magpie AI designed to revolutionize the way busy professionals stay informed amidst their hectic schedules. In today's information-driven world, newsletters and articles flood our inboxes, overwhelming us with valuable insights buried in lengthy content. Our plugin offers a game-changing solution, effortlessly summarizing and distilling this wealth of information into concise, digestible nuggets of knowledge read to you like an audiobook.</p>
 	<p>This project was made for the AI21 labs July 2023 Hackathon organized by lablab.ai.</p>
-	[![Imagen de ejemplo](https://i.imgur.com/Jk1yIAT.png)]
+	<a href="https://youtu.be/GSGctq-CIj4" target="_blank"><img src="https://i.imgur.com/Jk1yIAT.png" ></a>
 	<h2>Features</h2>
 	<ul>
 		<li> Bookmark: Store the website URL </li> 
