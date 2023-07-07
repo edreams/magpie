@@ -17,7 +17,7 @@
 	</ul>
 	<h2>Installation</h2>
 	<ol>
-		<li>Download this <a href="http://130.211.217.70/plugin.tar.gz">Zip file</a> (if Chrome does not allow, please copy the address and paste it to the browser, or use our page <a href="http://130.211.217.70/" target="_blank">Magpie AI</a>)</li>
+		<li>Download this <a href="http://130.211.217.70/plugin.tar.gz"><img src="http://130.211.217.70/download.png" width="200" alt="Download Magpie"></a> (if Chrome does not allow, please copy the address and paste it to the browser, or use our page <a href="http://130.211.217.70/" target="_blank">Magpie AI</a>)</li>
 		<li>Extract the ZIP file</li>
 		<li>Open Google Chrome and navigate to chrome://extensions/</li>
 		<li>Enable Developer Mode by clicking the toggle switch on the top right corner of the page</li>
@@ -39,5 +39,10 @@
 		<li>Python, HTML, CSS, JavaScript</li>
 		<li>Google Chrome Extension </li>
 	</ul>
+	<div align="center">
+        <a href="https://lablab.ai/event/plug-into-ai-with-ai21/magpie-ai/magpie-ai" target="_blank">
+            <img src="http://130.211.217.70/team.jpg" alt="Magpie AI Team" class="team-image">
+        </a>
+    </div>
 </body>
 </html>
